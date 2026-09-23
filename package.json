@@ -1,0 +1,38 @@
+{
+  "name": "dispatchit-sdk",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Repository for the Dispatchit customer SDK.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "prepare": "lefthook install",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "changeset": "changeset",
+    "ci:version": "changeset version",
+    "ci:publish": "changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "3.0.3",
+    "@evilmartians/lefthook": "2.1.14",
+    "eslint-plugin-zod": "^4.14.1",
+    "oxfmt": "^0.70.0",
+    "oxlint": "^1.85.0",
+    "oxlint-tsgolint": "7.0.2002",
+    "typescript": "^7.0.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "12.5.1",
+      "onFail": "error"
+    }
+  },
+  "packageManager": "pnpm@12.5.1"
+}

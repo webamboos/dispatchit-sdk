@@ -1,0 +1,15 @@
+pre-commit:
+  commands:
+    lint:
+      glob: '*.{ts,tsx,js,jsx}'
+      run: mise exec pnpm -- pnpm exec oxlint --fix {staged_files}
+      stage_fixed: true
+    format:
+      glob: '*.{ts,tsx,js,jsx,json,md,yaml}'
+      run: mise exec pnpm -- pnpm exec oxfmt --write {staged_files}
+      stage_fixed: true
+
+pre-push:
+  commands:
+    typecheck:
+      run: mise exec pnpm -- pnpm typecheck

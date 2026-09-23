@@ -1,0 +1,28 @@
+{
+  "include": ["**/*.ts"],
+  "exclude": ["dist", "rolldown.config.ts", "vitest.config.ts"],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "preserve",
+    "lib": ["ESNext"],
+    "types": ["node"],
+
+    "outDir": "./dist",
+    "rootDir": "./src",
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "rewriteRelativeImportExtensions": true,
+    "erasableSyntaxOnly": true,
+    "allowJs": true,
+    "verbatimModuleSyntax": true,
+
+    /* Linting */
+    "skipLibCheck": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  }
+}
