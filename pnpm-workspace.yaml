@@ -4,7 +4,6 @@ packages:
 
 catalog:
   '@types/node': 26.5.1
-  tsx: 4.23.13
   typescript: 7.0.2
   vitest: 5.0.1
   zod: 4.6.5
@@ -12,3 +11,7 @@ catalog:
 allowBuilds:
   '@evilmartians/lefthook': true
   esbuild: true
+  workerd: true
+
+minimumReleaseAgeExclude:
+  - wrangler@4.136.3

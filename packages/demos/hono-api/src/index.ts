@@ -1,4 +1,3 @@
-import {serve} from '@hono/node-server'
 import {dispatchitHono} from 'dispatchit/adapters/hono'
 import {Hono} from 'hono'
 
@@ -18,10 +17,4 @@ app.use(
   dispatchitHono(config)
 )
 
-const port = Number(process.env.DEMO_API_PORT ?? 4100)
-const hostname = process.env.DEMO_API_HOST ?? '127.0.0.1'
-
-serve({fetch: app.fetch, port, hostname}, () => {
-  console.log(`hono-api listening on http://${hostname}:${port}`)
-  console.log(`webhook endpoint: http://${hostname}:${port}/api/webhooks/dispatchit`)
-})
+export default app

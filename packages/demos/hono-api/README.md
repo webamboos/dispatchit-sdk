@@ -1,19 +1,25 @@
 # hono-api
 
-Demo webhook endpoint for Dispatchit (Hono / Node) built on [`dispatchit`](../../dispatchit) and Hono. It exposes mocked delivery/logistics capabilities the Dispatchit assistant can invoke during a conversation. It has no database, deliveries are seeded in memory per phone number.
+Demo webhook endpoint for Dispatchit (Hono on Cloudflare Workers) built on [`dispatchit`](../../dispatchit) and Hono. It exposes mocked delivery/logistics capabilities the Dispatchit assistant can invoke during a conversation. It has no database, deliveries are seeded in memory per phone number.
 
 ## Running
 
 ```bash
-pnpm dev                      # from the repo root, alongside the other packages
+pnpm dev                      # wrangler dev, from the repo root or the package
 pnpm --filter hono-api dev   # or on its own
+```
+
+Deploy (requires a Cloudflare auth session, e.g. `wrangler login`):
+
+```bash
+pnpm --filter hono-api deploy
 ```
 
 ## Connecting Dispatchit
 
-1. Start this package.
+1. Start this package locally (`wrangler dev` runs on `http://127.0.0.1:8787`).
 2. In the Dispatchit app (Settings → Webhooks), configure:
-   - URL: `http://127.0.0.1:4100/api/webhooks/dispatchit`
+   - URL: `http://127.0.0.1:8787/api/webhooks/dispatchit`
    - Signing key: the same secret this package verifies with (`DEMO_WEBHOOK_SECRET`, defaults to `dev-webhook-secret`).
 3. Press **Test** — Dispatchit sends a signed ping and the webhook flips to ready.
 
@@ -22,8 +28,8 @@ pnpm --filter hono-api dev   # or on its own
 | Variable              | Default              | Purpose                                             |
 | --------------------- | -------------------- | --------------------------------------------------- |
 | `DEMO_WEBHOOK_SECRET` | `dev-webhook-secret` | HMAC secret used to verify requests from Dispatchit |
-| `DEMO_API_PORT`       | `4100`               | HTTP port                                           |
-| `DEMO_API_HOST`       | `127.0.0.1`          | Bind address (`0.0.0.0` inside the Docker image)    |
+
+Set secrets on the deployed Worker with `pnpm --filter hono-api exec wrangler secret put DEMO_WEBHOOK_SECRET`
 
 ## Capabilities
 
