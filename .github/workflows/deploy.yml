@@ -1,0 +1,79 @@
+name: Deploy hono-api
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/demos/hono-api/**'
+      - 'packages/dispatchit/**'
+      - '.github/workflows/deploy.yml'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'packages/demos/hono-api/**'
+      - 'packages/dispatchit/**'
+      - '.github/workflows/deploy.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+# One deploy at a time per PR/branch.
+concurrency:
+  group: deploy-hono-api-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy hono-api
+    runs-on: ubuntu-24.04-arm
+    # Manual approval gate for production, if wanted: create the "production"
+    # environment in repo settings and add required reviewers.
+    environment: ${{ github.event_name == 'push' && 'production' || '' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: jdx/mise-action@v4
+
+      - run: pnpm install --frozen-lockfile
+
+      # wrangler re-runs build.command from wrangler.jsonc before bundling; this
+      # step keeps the mandatory SDK build visible and fails fast if it breaks.
+      - name: Build dispatchit SDK
+        run: pnpm --filter dispatchit build
+
+      - name: Skip notice for fork PRs
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork
+        run: 'echo "::notice::Preview deploy skipped: fork PRs have no access to CLOUDFLARE secrets."'
+
+      # `versions upload` never activates the production version, so previews on
+      # PRs cannot affect production traffic. Exposes the version preview URL.
+      - name: Upload preview version
+        id: preview
+        if: github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm --filter hono-api exec wrangler versions upload \
+            --message "preview: ${{ github.head_ref }} @ ${{ github.event.pull_request.head.sha }}" \
+            | tee "$RUNNER_TEMP/wrangler-preview.log"
+          preview_url=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev[^[:space:]]*' "$RUNNER_TEMP/wrangler-preview.log" | head -n 1 || true)
+          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+
+      - name: Comment preview URL on the PR
+        if: github.event_name == 'pull_request' && steps.preview.outputs.preview_url != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PREVIEW_URL: ${{ steps.preview.outputs.preview_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: 'gh pr comment "$PR_NUMBER" --body "🧪 Preview deploy for `$HEAD_SHA`: $PREVIEW_URL"'
+
+      # Production deploys only from main; uploads above never touch production
+      # traffic, this does.
+      - name: Deploy to production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: pnpm --filter hono-api exec wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
