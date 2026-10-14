@@ -4,6 +4,7 @@ import {dts} from 'rolldown-plugin-dts'
 export default defineConfig({
   input: {
     index: 'src/index.ts',
+    'adapters/express': 'src/adapters/express.ts',
     'adapters/hono': 'src/adapters/hono.ts',
   },
   output: {
