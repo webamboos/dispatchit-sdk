@@ -1,6 +1,6 @@
 # dispatchit
 
-Framework-agnostic SDK for building Dispatchit webhook endpoints. It lets you expose typed **capabilities** — small, schema-validated operations — that the Dispatchit assistant can invoke on your backend during a conversation, along with an auth hook to decide which users are allowed in.
+Framework-agnostic SDK for integrating your backends with the Dispatchit agents. The SDK provides utilities to make it easier for you to expose _capabilities_ that the Dispatchit assistant can invoke on your backend during a conversation, along with an auth hook to decide which users are allowed in. The SDK provides a fully type-safe API for adding capabilities easily.
 
 ## Installation
 
@@ -8,7 +8,7 @@ Framework-agnostic SDK for building Dispatchit webhook endpoints. It lets you ex
 pnpm add dispatchit
 ```
 
-The SDK has zero runtime dependencies. Schemas are provided through the [Standard Schema](https://standardschema.dev) interface, so any compliant validation library works — Zod 4, Valibot and ArkType are supported out of the box.
+The SDK has zero runtime dependencies. Schemas are provided through the [Standard Schema](https://standardschema.dev) interface, so any compliant validation library works (e.g. Zod, Valibot, etc.)
 
 ## Quick start
 
@@ -21,7 +21,7 @@ import * as z from 'zod'
 import {applyToJob, searchApplicants} from './your-db'
 
 export const config = dispatchit({
-  webhookSecret: process.env.ANSWR_WEBHOOK_SECRET!,
+  webhookSecret: process.env.DISPATCHIT_WEBHOOK_SECRET!,
   onAuth: async ({phoneNumber}) => {
     // Return whether this user is allowed to use the assistant.
     return userExists(phoneNumber)
@@ -48,14 +48,14 @@ export const config = dispatchit({
   },
 })
 
+// hono
 const app = new Hono()
 app.use('/api/webhooks/dispatchit', dispatchitHono(config))
 ```
 
 ### Express
 
-Express consumes the raw body while parsing it, but signature verification needs the un-parsed payload — so
-capture the raw body with a parser-level `verify` hook before mounting the adapter:
+The Express setup is simple, but our SDK will need the raw body instead of the already JSON parsed body from Express to correctly validate the signature.
 
 ```ts
 import {dispatchitExpress} from 'dispatchit/adapters/express'
@@ -75,8 +75,7 @@ app.post(
 )
 ```
 
-Works with Express 4 and 5. Requests that reach the adapter without a captured `rawBody` fail with a
-descriptive error.
+Works with Express 4 and 5. Requests that reach the adapter without a captured `rawBody` fail.
 
 ## Concepts
 
@@ -106,6 +105,8 @@ A capability is a single operation the assistant can perform. Each one has:
 Every failure path — invalid input, a thrown handler, a result that doesn't match `onSuccess` — is answered with the capability's `onFail` directive, so a broken capability never breaks a conversation.
 
 ## Protocol
+
+In case we don't support your framework, or your backend is built in a completely different language, the following details can help you implement an adapter.
 
 All requests are `POST` with a JSON body, signed with the webhook secret:
 
@@ -140,12 +141,3 @@ The package ships two entry points, both ESM:
 - `dispatchit/adapters/*` — framework adapters (`express` and `hono` today)
 
 `express` and `hono` are optional peer dependencies — only install the one(s) matching the adapter you use.
-
-## Releasing
-
-Releases are managed with [Changesets](https://github.com/changesets/changesets) — see
-[`.changeset/README.md`](../.changeset/README.md) in the repository root for the full flow:
-
-1. Add a changeset on your PR (`pnpm changeset`).
-2. Merging to `main` opens a _Version Packages_ PR that bumps the version and writes `CHANGELOG.md`.
-3. Merging that PR publishes to npm and tags the release.
