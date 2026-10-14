@@ -52,6 +52,32 @@ const app = new Hono()
 app.use('/api/webhooks/dispatchit', dispatchitHono(config))
 ```
 
+### Express
+
+Express consumes the raw body while parsing it, but signature verification needs the un-parsed payload — so
+capture the raw body with a parser-level `verify` hook before mounting the adapter:
+
+```ts
+import {dispatchitExpress} from 'dispatchit/adapters/express'
+import type {DispatchitRequest} from 'dispatchit/adapters/express'
+import express from 'express'
+
+const app = express()
+
+app.post(
+  '/api/webhooks/dispatchit',
+  express.json({
+    verify: (req, res, buf) => {
+      ;(req as DispatchitRequest).rawBody = buf
+    },
+  }),
+  dispatchitExpress(config)
+)
+```
+
+Works with Express 4 and 5. Requests that reach the adapter without a captured `rawBody` fail with a
+descriptive error.
+
 ## Concepts
 
 ### Capabilities
@@ -111,9 +137,9 @@ pnpm typecheck  # tsc --noEmit
 The package ships two entry points, both ESM:
 
 - `dispatchit` — core
-- `dispatchit/adapters/*` — framework adapters (`hono` today)
+- `dispatchit/adapters/*` — framework adapters (`express` and `hono` today)
 
-`hono` is an optional peer dependency — only install it if you use the Hono adapter.
+`express` and `hono` are optional peer dependencies — only install the one(s) matching the adapter you use.
 
 ## Releasing
 
