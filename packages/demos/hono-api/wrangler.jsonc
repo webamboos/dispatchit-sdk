@@ -8,4 +8,8 @@
   "observability": {
     "enabled": true,
   },
+  // Builds the dispatchit SDK (dist/) on fresh clones before wrangler bundles the worker.
+  "build": {
+    "command": "pnpm --filter dispatchit build",
+  },
 }
